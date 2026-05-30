@@ -1,0 +1,25 @@
+{
+  "name": "app-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently --names api,web --prefix-colors cyan,green --kill-others-on-fail \"pnpm --filter @app/api dev\" \"pnpm --filter @app/web dev\"",
+    "dev:api": "pnpm --filter @app/api dev",
+    "dev:web": "pnpm --filter @app/web dev",
+    "typecheck:all": "pnpm -r --if-present typecheck",
+    "build:all": "pnpm -r --if-present build",
+    "test:all": "pnpm -r --if-present test",
+    "ai-team": "pnpm --filter @a360/ai-team cli"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

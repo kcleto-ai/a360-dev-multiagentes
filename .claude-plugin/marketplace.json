@@ -1,0 +1,14 @@
+{
+  "name": "a360",
+  "owner": {
+    "name": "KCG Group / Accelera360",
+    "email": "kelvin.cleto@kcggroup.com.br"
+  },
+  "plugins": [
+    {
+      "name": "a360-dev-multiagentes",
+      "source": ".",
+      "description": "Time de IA multi-agente (CTO, Arquiteto, Dev, Integrador) que constrói software de ponta a ponta pra fundador não-técnico: scaffold do monorepo, lê o design do OpenDesign, desenvolve em worktrees paralelas e faz deploy no VPS."
+    }
+  ]
+}

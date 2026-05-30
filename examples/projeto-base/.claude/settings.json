@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "a360": {
+      "source": { "source": "github", "repo": "kcleto-ai/a360-dev-multiagentes" }
+    }
+  },
+  "enabledPlugins": {
+    "a360-dev-multiagentes@a360": true
+  }
+}

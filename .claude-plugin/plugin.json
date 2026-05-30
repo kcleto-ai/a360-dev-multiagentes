@@ -1,0 +1,19 @@
+{
+  "name": "a360-dev-multiagentes",
+  "version": "1.0.0",
+  "description": "Time de IA multi-agente (CTO, Arquiteto, Dev, Integrador) que constrói software de ponta a ponta pra um fundador não-técnico: scaffolda o monorepo, lê o design system do OpenDesign, desenvolve em paralelo com git worktrees, e faz o deploy no VPS com Docker. Da ideia ao ar.",
+  "author": {
+    "name": "KCG Group / Accelera360",
+    "email": "kelvin.cleto@kcggroup.com.br"
+  },
+  "homepage": "https://github.com/Accelera360",
+  "keywords": [
+    "multi-agent",
+    "worktrees",
+    "scaffold",
+    "monorepo",
+    "spec-driven",
+    "deploy",
+    "no-code-founder"
+  ]
+}

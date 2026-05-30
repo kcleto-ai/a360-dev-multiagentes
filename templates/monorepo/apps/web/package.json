@@ -1,0 +1,10 @@
+{
+  "name": "@app/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'apps/web é um stub — rode /a360-vamos pra construir o frontend' && exit 0",
+    "typecheck": "tsc --noEmit"
+  }
+}

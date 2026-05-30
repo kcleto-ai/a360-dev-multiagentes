@@ -1,0 +1,5 @@
+{
+  "smoke": ["pnpm", "-r", "--if-present", "typecheck"],
+  "branchPrefix": "worker",
+  "syncBarrels": []
+}

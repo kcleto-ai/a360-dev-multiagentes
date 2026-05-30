@@ -1,0 +1,20 @@
+# Reverse proxy com HTTPS automático (Let's Encrypt). Troque seu-dominio.com pelo domínio real.
+# Front (web) na raiz; /api/* vai pro backend.
+
+seu-dominio.com {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy api:3001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
+
+# Dev local sem domínio: descomente pra testar em http://localhost
+# :80 {
+# 	handle /api/* { reverse_proxy api:3001 }
+# 	handle { reverse_proxy web:3000 }
+# }
