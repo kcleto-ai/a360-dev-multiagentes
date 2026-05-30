@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "a360-dev-multiagentes",
-      "source": ".",
+      "source": { "source": "github", "repo": "kcleto-ai/a360-dev-multiagentes" },
       "description": "Time de IA multi-agente (CTO, Arquiteto, Dev, Integrador) que constrói software de ponta a ponta pra fundador não-técnico: scaffold do monorepo, lê o design do OpenDesign, desenvolve em worktrees paralelas e faz deploy no VPS."
     }
   ]
