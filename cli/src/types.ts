@@ -14,6 +14,10 @@ export interface Slot {
   hasBrief: boolean;
   hasContract: boolean;
   hasArtifacts: boolean;
+  /** Globs do TERRITORY.txt — arquivos que o slot PODE tocar (zoning verificável). */
+  territory: string[];
+  /** Slots do DEPENDS-ON.txt — precisam estar `done` antes deste começar (ex: fundação → consumidor). */
+  dependsOn: string[];
 }
 
 export interface Worktree {

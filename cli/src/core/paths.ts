@@ -5,3 +5,8 @@ import { MONOREPO_ROOT } from './config.ts';
 export { MONOREPO_ROOT };
 export const SLOTS_DIR = path.join(MONOREPO_ROOT, 'specs', 'slots');
 export const WORKTREES_DIR = path.join(MONOREPO_ROOT, '.worktrees');
+
+/** Estado de runtime do modo autônomo (gitignored): pids, metas, settings, logs. */
+export const RUNTIME_DIR = path.join(MONOREPO_ROOT, '.ai-team');
+export const RUN_DIR = path.join(RUNTIME_DIR, 'run');
+export const LOGS_DIR = path.join(RUNTIME_DIR, 'logs');

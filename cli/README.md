@@ -4,7 +4,7 @@ Architect CLI que orquestra **workers em git worktrees** com slots + zoning ríg
 É o motor do desenvolvimento multi-agente local: vários Claudes trabalham em paralelo,
 cada um numa worktree isolada, sem merge hell.
 
-> Versão generalizada do `apps/ai-team` do projeto `growth-ai-agents`. Funciona em
+> Generalizado a partir do motor que originou a metodologia. Funciona em
 > **qualquer** monorepo — detecta a raiz via `git rev-parse --show-toplevel`.
 
 ## Como roda

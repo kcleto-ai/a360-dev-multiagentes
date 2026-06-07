@@ -3,11 +3,52 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+/** Versão de schema do .ai-team.json que este CLI entende. */
+export const CONFIG_VERSION = 3;
+
+/** Configuração do modo autônomo (`ai-team run`) — workers headless via `claude -p`. */
+export interface AutonomousConfig {
+  /** Workers em paralelo. O teto real é o rate limit da conta — default conservador. */
+  maxWorkers: number;
+  /** Modelo dos workers (`--model`). null = herda o default da conta do usuário. */
+  model: string | null;
+  /** Binário que vira o worker. Default "claude". Trocável pra teste (script fake). */
+  command: string;
+  /** Teto de turnos por worker (`--max-turns`) — anti-loop. */
+  maxTurns: number;
+  /** Timeout absoluto de um slot (wall-clock). Estourou = slot mal decomposto. */
+  slotTimeoutMin: number;
+  /** Sem commit novo nem log novo por N min = worker estagnado → kill + retry. */
+  stallTimeoutMin: number;
+  /** Re-despachos por slot antes de escalar pro humano. */
+  maxRetries: number;
+  /** false (default) = nega WebFetch/WebSearch/curl/wget pros workers. */
+  allowNetwork: boolean;
+  /** Triage automática de blocked com Arquiteto one-shot (Fase 2). */
+  triage: boolean;
+}
+
+export const AUTONOMOUS_DEFAULTS: AutonomousConfig = {
+  // Squad padrão: 4 Devs (2 front + 2 back) além de CTO/Arquiteto. O backoff
+  // automático reduz a concorrência se o rate limit da conta apertar.
+  maxWorkers: 4,
+  model: null,
+  command: 'claude',
+  maxTurns: 80,
+  slotTimeoutMin: 45,
+  stallTimeoutMin: 20,
+  maxRetries: 2,
+  allowNetwork: false,
+  triage: true,
+};
+
 /**
  * Config opcional do projeto-alvo, lida de `.ai-team.json` na raiz do repo.
  * Tudo tem default sensato — o arquivo só existe quando o projeto quer customizar.
  */
 export interface AiTeamConfig {
+  /** Versão do schema deste arquivo. CLI avisa se for mais nova do que entende. */
+  version: number;
   /** Comando de smoke rodado pelo reconciler após merge. Default: typecheck recursivo. */
   smoke: string[];
   /** Prefixo das branches de worker. Default: "worker". Branch vira `<prefix>/<milestone>/<slotId>`. */
@@ -17,12 +58,22 @@ export interface AiTeamConfig {
    * adiciona `import './<arquivo>';` dos .ts irmãos que faltarem. Opt-in — vazio = não mexe.
    */
   syncBarrels: string[];
+  /**
+   * Globs de ZONA NEUTRA (PARALLEL-PROTOCOL §3) — arquivos que só o Integrador toca.
+   * Usados pelo reconciler (warning de zoning) e pelo pre-commit do projeto.
+   */
+  neutralZones: string[];
+  /** Modo autônomo (`ai-team run`). Tudo tem default — o bloco é opcional. */
+  autonomous: AutonomousConfig;
 }
 
 const DEFAULTS: AiTeamConfig = {
+  version: CONFIG_VERSION,
   smoke: ['pnpm', '-r', '--if-present', 'typecheck'],
   branchPrefix: 'worker',
   syncBarrels: [],
+  neutralZones: [],
+  autonomous: { ...AUTONOMOUS_DEFAULTS },
 };
 
 function detectRoot(): string {
@@ -49,10 +100,31 @@ export function loadConfig(): AiTeamConfig {
   try {
     const raw = fs.readFileSync(cfgPath, 'utf-8');
     const parsed = JSON.parse(raw) as Partial<AiTeamConfig>;
+    const version = typeof parsed.version === 'number' ? parsed.version : 1;
+    if (version > CONFIG_VERSION) {
+      console.error(
+        `⚠️  .ai-team.json declara version=${version}, mas este CLI entende até ${CONFIG_VERSION}. ` +
+          `Atualize o ai-team (tools/ai-team) ou campos novos serão ignorados.`,
+      );
+    }
+    const auto = (parsed.autonomous ?? {}) as Partial<AutonomousConfig>;
     cached = {
+      version,
       smoke: Array.isArray(parsed.smoke) && parsed.smoke.length > 0 ? parsed.smoke : DEFAULTS.smoke,
       branchPrefix: typeof parsed.branchPrefix === 'string' && parsed.branchPrefix ? parsed.branchPrefix : DEFAULTS.branchPrefix,
       syncBarrels: Array.isArray(parsed.syncBarrels) ? parsed.syncBarrels : DEFAULTS.syncBarrels,
+      neutralZones: Array.isArray(parsed.neutralZones) ? parsed.neutralZones : DEFAULTS.neutralZones,
+      autonomous: {
+        maxWorkers: typeof auto.maxWorkers === 'number' && auto.maxWorkers > 0 ? auto.maxWorkers : AUTONOMOUS_DEFAULTS.maxWorkers,
+        model: typeof auto.model === 'string' && auto.model ? auto.model : AUTONOMOUS_DEFAULTS.model,
+        command: typeof auto.command === 'string' && auto.command ? auto.command : AUTONOMOUS_DEFAULTS.command,
+        maxTurns: typeof auto.maxTurns === 'number' && auto.maxTurns > 0 ? auto.maxTurns : AUTONOMOUS_DEFAULTS.maxTurns,
+        slotTimeoutMin: typeof auto.slotTimeoutMin === 'number' && auto.slotTimeoutMin > 0 ? auto.slotTimeoutMin : AUTONOMOUS_DEFAULTS.slotTimeoutMin,
+        stallTimeoutMin: typeof auto.stallTimeoutMin === 'number' && auto.stallTimeoutMin > 0 ? auto.stallTimeoutMin : AUTONOMOUS_DEFAULTS.stallTimeoutMin,
+        maxRetries: typeof auto.maxRetries === 'number' && auto.maxRetries >= 0 ? auto.maxRetries : AUTONOMOUS_DEFAULTS.maxRetries,
+        allowNetwork: auto.allowNetwork === true,
+        triage: auto.triage !== false,
+      },
     };
   } catch {
     cached = { ...DEFAULTS };

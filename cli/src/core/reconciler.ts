@@ -15,15 +15,26 @@ import {
 } from './git.ts';
 import { scanSlots, statusLabel } from './slot-scanner.ts';
 import { scanWorkerBranches } from './branch-scanner.ts';
+import { checkZoning, parseLineList, type ZoningCheck } from './zoning.ts';
 import type { Slot } from '../types.ts';
 
 const exec = promisify(execFile);
 
+export interface SlotZoningReport {
+  slot: string;          // "M1/slot-x"
+  branch: string;
+  check: ZoningCheck;
+  filesTouched: number;
+}
+
 export interface ReconcileResult {
   mergedSlots: Array<{ id: string; milestone: string }>;
   conflicts: { slot: string; output: string }[];
+  zoning: SlotZoningReport[];
+  barrelsSynced: string[];
   smokeOk: boolean;
   smokeOutput: string;
+  reportPath: string | null;
 }
 
 const C = {
@@ -59,10 +70,50 @@ async function findDoneSlotsWithBranches(): Promise<Array<{ slot: Slot; branch: 
           hasBrief: false,
           hasContract: false,
           hasArtifacts: false,
+          territory: [],
+          dependsOn: [],
         };
     out.push({ slot, branch: b.branch });
   }
   return out;
+}
+
+/**
+ * Valida zoning de uma branch ANTES do merge (PARALLEL-PROTOCOL §3):
+ * diff main...branch vs TERRITORY.txt do slot + zonas neutras do .ai-team.json.
+ * Não bloqueia o merge — vira warning destacado + entrada no RECONCILE-REPORT.md
+ * pro review estrutural (skill review-before-merge) decidir.
+ */
+async function checkBranchZoning(
+  branch: string,
+  milestone: string,
+  slotId: string,
+): Promise<SlotZoningReport> {
+  const { neutralZones } = loadConfig();
+  const slotDirRel = `specs/slots/${milestone}/${slotId}`;
+
+  let territory: string[] = [];
+  try {
+    const { stdout } = await runGit(['show', `${branch}:${slotDirRel}/TERRITORY.txt`]);
+    territory = parseLineList(stdout);
+  } catch {
+    /* slot sem território declarado — check reporta hasTerritory=false */
+  }
+
+  let files: string[] = [];
+  try {
+    const { stdout } = await runGit(['diff', '--name-only', `main...${branch}`]);
+    files = stdout.trim().split('\n').filter(Boolean);
+  } catch {
+    /* diff falhou — segue com lista vazia */
+  }
+
+  return {
+    slot: `${milestone}/${slotId}`,
+    branch,
+    check: checkZoning({ files, territory, neutralZones, slotDirRel }),
+    filesTouched: files.length,
+  };
 }
 
 /** Auto-resolve conflito conhecido: STATUS.txt — sempre prefere `done`. */
@@ -94,7 +145,8 @@ async function autoResolveStatusConflict(): Promise<boolean> {
  * Pra cada barrel, adiciona `import './<arquivo>';` dos .ts irmãos que faltarem.
  * Opt-in: sem config, não faz nada.
  */
-async function syncBarrels(): Promise<void> {
+async function syncBarrels(): Promise<string[]> {
+  const synced: string[] = [];
   const { syncBarrels: barrels } = loadConfig();
   for (const rel of barrels) {
     const indexPath = path.join(MONOREPO_ROOT, rel);
@@ -119,9 +171,71 @@ async function syncBarrels(): Promise<void> {
     if (changed) {
       await fs.writeFile(indexPath, content);
       await runGit(['add', rel]);
+      synced.push(rel);
       console.log(`${C.green}✓${C.reset} barrel ${rel} sincronizado (${files.length} imports)`);
     }
   }
+  return synced;
+}
+
+/** Relatório de reconcile (markdown) — evidência pro review estrutural + HTC. */
+function buildReport(result: ReconcileResult): string {
+  const lines: string[] = [];
+  lines.push('# Reconcile Report');
+  lines.push('');
+  lines.push(`> Gerado por \`ai-team reconcile\` em ${new Date().toISOString()}`);
+  lines.push('');
+  lines.push('## Slots integrados');
+  lines.push('');
+  if (result.mergedSlots.length === 0) {
+    lines.push('_nenhum_');
+  } else {
+    for (const s of result.mergedSlots) lines.push(`- ✅ ${s.milestone}/${s.id}`);
+  }
+  if (result.conflicts.length > 0) {
+    lines.push('');
+    lines.push('## Conflitos (merge abortado — resolver manualmente)');
+    lines.push('');
+    for (const c of result.conflicts) lines.push(`- ✗ ${c.slot}`);
+  }
+  lines.push('');
+  lines.push('## Zoning');
+  lines.push('');
+  for (const z of result.zoning) {
+    const v = z.check.violations;
+    if (!z.check.hasTerritory) {
+      lines.push(`- ⚠️ ${z.slot}: sem TERRITORY.txt — zoning não verificável (${z.filesTouched} arquivos tocados)`);
+    } else if (v.length === 0) {
+      lines.push(`- ✅ ${z.slot}: ${z.filesTouched} arquivos, todos no território`);
+    } else {
+      lines.push(`- 🚨 ${z.slot}: ${v.length} violação(ões) — REVISAR no review estrutural:`);
+      for (const viol of v) {
+        lines.push(`  - \`${viol.file}\` → ${viol.kind === 'neutral-zone' ? 'ZONA NEUTRA' : 'fora do território'}`);
+      }
+    }
+  }
+  lines.push('');
+  lines.push('## Barrels sincronizados');
+  lines.push('');
+  lines.push(result.barrelsSynced.length === 0 ? '_nenhum_' : result.barrelsSynced.map((b) => `- ${b}`).join('\n'));
+  lines.push('');
+  lines.push('## Smoke');
+  lines.push('');
+  lines.push(result.smokeOk ? '✅ verde' : '❌ FALHOU');
+  if (!result.smokeOk) {
+    lines.push('');
+    lines.push('```');
+    lines.push(result.smokeOutput.slice(-2000));
+    lines.push('```');
+  }
+  lines.push('');
+  lines.push('## Próximos passos do Integrador');
+  lines.push('');
+  lines.push('1. Review estrutural (skill `review-before-merge`) — Tier 1: fidelidade à DESIGN-SPEC.');
+  lines.push('2. Ler ARTIFACTS.md dos slots: pendências + candidatos à fundação.');
+  lines.push('3. HTC: subir o app e a pessoa testar/aprovar antes de fechar o milestone.');
+  lines.push('');
+  return lines.join('\n');
 }
 
 async function runSmoke(): Promise<{ ok: boolean; output: string }> {
@@ -150,9 +264,30 @@ export async function reconcile(opts: ReconcileOptions = {}): Promise<ReconcileR
   const result: ReconcileResult = {
     mergedSlots: [],
     conflicts: [],
+    zoning: [],
+    barrelsSynced: [],
     smokeOk: false,
     smokeOutput: '',
+    reportPath: null,
   };
+
+  async function persistReport(): Promise<void> {
+    const rel = path.join('specs', 'RECONCILE-REPORT.md');
+    const abs = path.join(MONOREPO_ROOT, rel);
+    await fs.writeFile(abs, buildReport(result));
+    result.reportPath = abs;
+    try {
+      await runGit(['add', rel]);
+      await runGit(['diff', '--cached', '--quiet']);
+    } catch {
+      try {
+        await runGit(['commit', '-m', 'reconcile: report']);
+      } catch {
+        /* nada staged ou commit falhou — relatório fica no working tree */
+      }
+    }
+    console.log(`${C.dim}relatório: ${rel}${C.reset}`);
+  }
 
   const cur = await currentBranch();
   if (cur !== 'main') {
@@ -168,6 +303,24 @@ export async function reconcile(opts: ReconcileOptions = {}): Promise<ReconcileR
   console.log(`${C.dim}Reconciliando ${candidates.length} slot(s) 'done':${C.reset}`);
   for (const { slot, branch } of candidates) {
     console.log(`  ${branch} (${statusLabel(slot)} / owner=${slot.owner ?? '—'})`);
+  }
+  console.log();
+
+  // Zoning (PARALLEL-PROTOCOL §3): valida cada branch ANTES do merge.
+  for (const { slot, branch } of candidates) {
+    const report = await checkBranchZoning(branch, slot.milestone, slot.id);
+    result.zoning.push(report);
+    if (!report.check.hasTerritory) {
+      console.log(`${C.yellow}⚠ ${report.slot}: sem TERRITORY.txt — zoning não verificável${C.reset}`);
+    } else if (report.check.violations.length > 0) {
+      console.log(`${C.red}🚨 ${report.slot}: zoning violado:${C.reset}`);
+      for (const v of report.check.violations) {
+        console.log(
+          `   ${v.file} ${C.red}→ ${v.kind === 'neutral-zone' ? 'ZONA NEUTRA' : 'fora do território'}${C.reset}`,
+        );
+      }
+      console.log(`${C.dim}   (merge segue; revisar no review estrutural antes de fechar o milestone)${C.reset}`);
+    }
   }
   console.log();
 
@@ -207,7 +360,7 @@ export async function reconcile(opts: ReconcileOptions = {}): Promise<ReconcileR
   }
 
   if (result.mergedSlots.length > 0) {
-    await syncBarrels();
+    result.barrelsSynced = await syncBarrels();
     try {
       await runGit(['diff', '--cached', '--quiet']);
     } catch {
@@ -224,6 +377,7 @@ export async function reconcile(opts: ReconcileOptions = {}): Promise<ReconcileR
   } else {
     console.log(`${C.red}✗ smoke falhou — abrindo gap pra correção${C.reset}`);
     console.log(smoke.output.slice(-1000));
+    await persistReport();
     return result;
   }
 
@@ -251,5 +405,6 @@ export async function reconcile(opts: ReconcileOptions = {}): Promise<ReconcileR
     }
   }
 
+  await persistReport();
   return result;
 }

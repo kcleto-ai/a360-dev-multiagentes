@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { SLOTS_DIR } from './paths.ts';
+import { parseLineList } from './zoning.ts';
 import type { Slot, SlotStatus } from '../types.ts';
 
 export function parseStatus(raw: string): SlotStatus {
@@ -65,6 +66,8 @@ export async function scanSlots(milestone?: string): Promise<Slot[]> {
         hasBrief: !!(await readIfExists(path.join(slotDir, 'BRIEF.md'))),
         hasContract: !!(await readIfExists(path.join(slotDir, 'CONTRACT.md'))),
         hasArtifacts: !!(await readIfExists(path.join(slotDir, 'ARTIFACTS.md'))),
+        territory: parseLineList(await readIfExists(path.join(slotDir, 'TERRITORY.txt'))),
+        dependsOn: parseLineList(await readIfExists(path.join(slotDir, 'DEPENDS-ON.txt'))),
       });
     }
   }
@@ -81,6 +84,22 @@ export function isClaimed(s: Slot): boolean {
 
 export function isDone(s: Slot): boolean {
   return typeof s.status === 'object' && s.status.kind === 'done';
+}
+
+/**
+ * Dependências do DEPENDS-ON.txt ainda não satisfeitas (slot referenciado não está `done`).
+ * Entrada aceita `slot-id` (mesmo milestone) ou `M2/slot-id` (qualificado).
+ * Lição (projeto-origem): fundação (schema/migration/adapter) merge ANTES dos
+ * consumidores — senão o smoke deles quebra por pré-condição ausente.
+ */
+export function unmetDependencies(slot: Slot, all: Slot[]): string[] {
+  return slot.dependsOn.filter((dep) => {
+    const qualified = dep.includes('/');
+    const milestone = qualified ? dep.slice(0, dep.indexOf('/')) : slot.milestone;
+    const id = qualified ? dep.slice(dep.indexOf('/') + 1) : dep;
+    const target = all.find((s) => s.milestone === milestone && s.id === id);
+    return !(target && isDone(target));
+  });
 }
 
 export function statusLabel(s: Slot): string {

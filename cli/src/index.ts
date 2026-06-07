@@ -4,6 +4,7 @@ import { start } from './cli/start.ts';
 import { status } from './cli/status.ts';
 import { reconcile } from './cli/reconcile.ts';
 import { auto } from './cli/auto.ts';
+import { run } from './cli/run.ts';
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
   const out: Record<string, string | boolean> = {};
@@ -37,20 +38,26 @@ function help(): never {
   ai-team plan [--milestone=M1]
       Lista slots available.
 
-  ai-team start --slot=<id> --worker=<name> [--milestone=M1] [--force]
+  ai-team start --slot=<id> --worker=<name> [--milestone=M1] [--force] [--spawn]
       Cria worktree em .worktrees/<worker>/, faz claim do slot, imprime prompt
-      pra colar no Claude.
+      pra colar no Claude. Com --spawn: sobe um claude -p headless (autônomo).
+
+  ai-team run [--milestone=M1] [--workers=2] [--poll-seconds=15] [--dry-run] [--plain]
+      MODO AUTÔNOMO: despacha workers headless por slot (waves via DEPENDS-ON),
+      vigia (watchdog: morto/estagnado/timeout → retry), reconcilia quando done,
+      faz triage de blocked com Arquiteto one-shot, e re-despacha — até o
+      milestone fechar. Dashboard live; Ctrl+C pra parar (estado fica no git).
 
   ai-team status [--milestone=M1]
       Dashboard ASCII (slots por status + worktrees ativas).
 
   ai-team reconcile [--cleanup=false] [--dry-run]
-      Merge branches de worker 'done' na main, sincroniza barrels, roda smoke,
-      remove worktrees + branches mergeadas.
+      Merge branches de worker 'done' na main, valida zoning, sincroniza barrels,
+      roda smoke, grava specs/RECONCILE-REPORT.md, remove worktrees + branches.
 
   ai-team auto [--milestone=M1] [--poll-seconds=15]
-      Loop autônomo: dashboard + reconcile automático quando slots 'done' aparecem.
-      Não cria workers — só monitora. Ctrl+C pra sair.
+      Monitor passivo (legado): dashboard + reconcile automático quando slots
+      'done' aparecem. Não cria workers — pro despacho autônomo use 'run'.
 `);
   process.exit(0);
 }
@@ -74,6 +81,19 @@ async function main() {
         worker,
         ...(ms ? { milestone: ms } : {}),
         force: args.force === true,
+        spawn: args.spawn === true,
+      });
+    }
+    case 'run': {
+      const ms = getStr(args, 'milestone');
+      const w = getStr(args, 'workers');
+      const ps = getStr(args, 'poll-seconds');
+      return run({
+        ...(ms ? { milestone: ms } : {}),
+        ...(w ? { workers: parseInt(w, 10) } : {}),
+        ...(ps ? { pollSeconds: parseInt(ps, 10) } : {}),
+        dryRun: args['dry-run'] === true,
+        plain: args.plain === true,
       });
     }
     case 'status':
