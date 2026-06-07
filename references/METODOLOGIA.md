@@ -1,12 +1,10 @@
 # Metodologia — time de IA multi-agente (alvo: Claude Code local)
 
 Como um time de IA constrói software de verdade: papéis claros, território exclusivo,
-biblioteca compartilhada, e cada entrega validada antes de virar mainline. Destilada do
-projeto `growth-ai-agents` (Maio/2026), que entregou um SDR multi-tenant com painel em ~4
-semanas usando vários Claudes em paralelo com **git worktrees + slots + zoning rígido**.
-
-Este pacote é a encarnação **Claude Code local** dessa metodologia (a versão Paperclip vive
-em `.a-nova-economia/`). Mesmos 4 papéis e filosofia; o alvo é o terminal, não uma API de issues.
+biblioteca compartilhada, e cada entrega validada antes de virar mainline. Destilada de
+dois projetos reais de produção: um SDR multi-tenant com painel entregue em ~4 semanas e
+uma plataforma de 6 milestones / 40+ slots, ambos construídos com vários Claudes em
+paralelo usando **git worktrees + slots + zoning rígido**.
 
 ## Os 4 pilares
 
@@ -18,16 +16,19 @@ em `.a-nova-economia/`). Mesmos 4 papéis e filosofia; o alvo é o terminal, nã
 4. **Anatomia do slot** — BRIEF (o quê + critérios + território) + DESIGN-SPEC (schemas/nomes
    exatos) + CONTRACT (I/O + smoke) + ARTIFACTS (no fim: arquivos, smoke, pendências).
 
-## Os 4 papéis (1 Company = 1 repo)
+## Os 4 papéis (1 time = 1 repo)
 
 | Papel | Qtd | O que faz |
 |---|---|---|
 | **CTO** | 1 | Fala com o fundador. Dita a stack. Define milestones. Não toca código. |
 | **Arquiteto** | 1 | Escreve BRIEF + DESIGN-SPEC por slot. Guardião do STACK-DEFAULT + ADRs. |
-| **Dev** | 1..N | Pega 1 slot, implementa a spec literalmente na sua worktree, smoke, done. |
+| **Dev** | **4 (squad padrão: 2 front + 2 back)** | Pega 1 slot, implementa a spec literalmente na sua worktree, smoke, done. |
 | **Integrador** | 1 | `reconcile` (merge na main) + review estrutural. Único a tocar a main/zonas neutras. |
 
-Escala: projeto pequeno = 1 Dev. Grande = 3 Devs em paralelo, territórios disjuntos.
+Escala: squad padrão = **4 Devs (2 front + 2 back)**, sustentada pela fissão de feature
+(contract-first — `decompose-goal` §2.5): cada feature média vira `api` ∥ `web-data` ∥
+`web-ui` + junção. Projeto muito pequeno pode rodar com menos; o gargalo desejável é o
+Arquiteto escrevendo contratos, nunca Dev ocioso por decomposição grossa.
 CTO/Arquiteto/Integrador continuam 1 cada.
 
 ## Os fluxos canônicos
@@ -55,10 +56,18 @@ registrado é meio-trabalho."
 
 ## Por que funciona
 
-- **Zoning rígido** elimina conflito de merge — dois Devs nunca tocam o mesmo arquivo.
-- **DESIGN-SPEC** elimina conflito semântico — todos usam os mesmos nomes/schemas.
+- **Arquitetura de fábrica** (v2, lições do projeto-origem): o monorepo nasce com a malha
+  de territórios pronta (1 módulo/rota/domínio = 1 slot) e 8 ADRs decididos — o time não
+  re-inventa arquitetura no M1 nem paga 7 refactors no M3.
+- **Zoning executável** elimina conflito de merge — TERRITORY.txt por slot + neutralZones
+  no `.ai-team.json`, validados por pre-commit e pelo reconcile (RECONCILE-REPORT.md).
+- **DESIGN-SPEC** elimina conflito semântico — nomes/schemas exatos + contratos da fundação
+  com path/assinatura + SHARED-CONTRACT por milestone.
+- **Waves (DEPENDS-ON)** eliminam o falso-blocked — fundação (schema/DTO/adapter) mergeia
+  antes dos consumidores; `ai-team plan/start` respeitam.
 - **Worktrees** dão isolamento real — `git checkout` de um não quebra o outro.
-- **Smoke como gate** + **review estrutural** garantem que nada quebrado vira mainline.
+- **Smoke como gate** (territorial pro Dev, cruzado e bloqueante no reconcile) + **review
+  estrutural** garantem que nada quebrado vira mainline.
 
 ## Antipadrões
 

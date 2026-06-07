@@ -1,7 +1,7 @@
 # Stack Default v1
 
 > **Fonte de verdade da stack opinionada que o CTO propõe automaticamente em todo projeto novo.**
-> Board não decide tecnicamente — o CTO dita. Esse documento codifica o que ele dita.
+> O fundador não decide tecnicamente — o CTO dita. Esse documento codifica o que ele dita.
 >
 > Atualizar este doc = mudar o que o time propõe pra todo novo projeto. Mudança aqui é decisão arquitetural com peso.
 
@@ -9,7 +9,7 @@
 
 ## Princípio
 
-Time enxuto + público empresarial → CTO **não delega escolha técnica** pro Board. Propõe stack opinionada, justificada, pronta pra começar. Board confirma ou pede ajuste **com justificativa concreta** (regulação, integração obrigatória, time humano que vai manter).
+Time enxuto + público empresarial → CTO **não delega escolha técnica** pro fundador. Propõe stack opinionada, justificada, pronta pra começar. O fundador confirma ou pede ajuste **com justificativa concreta** (regulação, integração obrigatória, time humano que vai manter).
 
 "Eu prefiro Prisma" não é justificativa. "Nosso time atual já mantém um sistema em Prisma e vamos consolidar" é.
 
@@ -97,7 +97,7 @@ Time enxuto + público empresarial → CTO **não delega escolha técnica** pro 
 | Backend | **Railway** (default) ou **Fly.io** | Roda Fastify direito; Vercel serverless tem tradeoffs ruins pra long-running |
 | Banco | Supabase (já managed) | Sem deploy próprio |
 | Storage | Supabase Storage | Casa com banco |
-| Secrets | Paperclip Secrets (prod) + `.env.local` (dev) | Source de verdade no Paperclip |
+| Secrets | env do provedor de deploy (prod) + `.env.local` (dev) | Nunca em código |
 
 > **Futuro (Hostinger skill em desenvolvimento + Infra Agent extension):** quando a skill estiver pronta, o Infra Agent (extensão opcional) avalia caso-a-caso entre Vercel / Railway / Fly.io / Hostinger / outros. Pra v1, default acima.
 
@@ -217,7 +217,7 @@ Toda entidade, query, evento e log carrega `workspaceId` + `clientId`. Sem exce�
 
 ### Dados & Secrets
 
-1. **Secrets nunca em código.** `.env.local` em dev (gitignored), Paperclip Secrets em prod. Validar via Zod na boot.
+1. **Secrets nunca em código.** `.env.local` em dev (gitignored), secrets do provedor de deploy em prod. Validar via Zod na boot.
 2. **LGPD-aware logs.** Pino com `redact: ['*.cpf', '*.email', '*.phone', '*.password']` em produção. Logs em dev podem ser verbosos.
 3. **RLS no Supabase ativado dia 1.** Mesmo em MVP. Defense in depth — não confie só no backend.
 
@@ -254,7 +254,7 @@ Esses vêm quando o projeto crescer. Pra MVP, os 12 acima são o teto.
 
 ## Quando o CTO desvia do default
 
-Board pode pedir outra stack. **CTO valida a justificativa** antes de aceitar:
+O fundador pode pedir outra stack. **CTO valida a justificativa** antes de aceitar:
 
 | Justificativa | Aceitar? |
 |---|---|
@@ -266,10 +266,10 @@ Board pode pedir outra stack. **CTO valida a justificativa** antes de aceitar:
 | "Vi um tweet recomendando Bun" | ❌ Não — hype, não dado |
 | "Vercel é mais fácil pra backend" | ❌ Não — incorreto pra Fastify long-running |
 
-Se Board insiste sem justificativa concreta, CTO escala via `request_confirmation`:
+Se o fundador insiste sem justificativa concreta, o CTO pergunta direto (AskUserQuestion):
 > "Mudança proposta de [X] pra [Y]. Trade-offs: [lista]. Recomendação: manter [X]. Confirma override?"
 
-Board confirma → CTO ajusta `EMPRESA.md` do projeto + procede. Não confirma → mantém default.
+O fundador confirma → CTO ajusta `EMPRESA.md` do projeto + procede. Não confirma → mantém default.
 
 ---
 
@@ -279,6 +279,6 @@ Board confirma → CTO ajusta `EMPRESA.md` do projeto + procede. Não confirma �
 - **Arquiteto** (guardião principal) lê na `write-design-spec` SEMPRE — toda DESIGN-SPEC valida contra este doc antes de finalizar (adapter pattern aplicado? Zod completo? Segurança baseline?). Quando uma decisão arquitetural emerge fora do que está aqui, Arquiteto cria ADR em `docs/ADRs/`.
 - **Dev** consulta quando tem dúvida ("posso usar lodash?" → não, use Array nativo; "qual lib de form?" → react-hook-form).
 - **Integrador** valida no review estrutural (Tier 1 — Architecture + Tier 7 — Dependencies) que mudanças respeitam os padrões e não introduziram dep fora.
-- **Board** lê pra entender o que o CTO vai propor antes de aceitar.
+- **Fundador** lê pra entender o que o CTO vai propor antes de aceitar.
 
 Modificações neste doc são raras e requerem aprovação do **CTO + Arquiteto**. Quando acontecerem, registre o motivo em commit message (`docs(stack): change ORM from Drizzle to <X> — reason: ...`) e crie ADR correspondente em `docs/ADRs/`.
