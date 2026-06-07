@@ -1,7 +1,7 @@
 {
   "name": "a360-dev-multiagentes",
-  "version": "1.0.0",
-  "description": "Time de IA multi-agente (CTO, Arquiteto, Dev, Integrador) que constrói software de ponta a ponta pra um fundador não-técnico: scaffolda o monorepo, lê o design system do OpenDesign, desenvolve em paralelo com git worktrees, e faz o deploy no VPS com Docker. Da ideia ao ar.",
+  "version": "2.0.0",
+  "description": "Time de IA multi-agente REAL (CTO, Arquiteto, 4 Devs paralelos, Integrador) que constrói software de ponta a ponta no Claude do próprio usuário: scaffolda monorepo funcional, lê o design system, desenvolve com workers headless autônomos (scheduler + watchdog + triage) em git worktrees com zoning executável, e faz deploy no VPS com Docker. Da ideia ao ar, em 3 comandos — pra leigos e devs.",
   "author": {
     "name": "KCG Group / Accelera360",
     "email": "kelvin.cleto@kcggroup.com.br"
