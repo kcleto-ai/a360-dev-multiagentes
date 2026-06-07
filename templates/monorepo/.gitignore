@@ -1,5 +1,6 @@
 node_modules/
 .worktrees/
+.ai-team/
 dist/
 build/
 .next/
@@ -16,3 +17,6 @@ coverage/
 # logs / sistema
 *.log
 .DS_Store
+
+# build info do tsc incremental
+*.tsbuildinfo

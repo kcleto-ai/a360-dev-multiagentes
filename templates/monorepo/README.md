@@ -18,8 +18,9 @@ Este projeto é construído por um time de IA (CTO, Arquiteto, Dev, Integrador) 
 trabalha em **git worktrees paralelas**. O motor é o `ai-team` CLI:
 
 ```bash
-pnpm ai-team plan --milestone=M1                       # slots disponíveis
-pnpm ai-team start --slot=<id> --worker=<nome>         # cria worktree + claim
+pnpm ai-team run --milestone=M1 --workers=4            # modo autônomo: constrói sozinho
+pnpm ai-team plan --milestone=M1                       # slots prontos (waves)
+pnpm ai-team start --slot=<id> --worker=<nome>         # despacho manual (demo)
 pnpm ai-team status                                     # dashboard
 pnpm ai-team reconcile                                  # integra os slots done
 ```

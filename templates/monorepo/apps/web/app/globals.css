@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+   Design tokens — fonte da verdade visual.
+   ZONA NEUTRA: só o Integrador altera depois que a skill ler-design-system
+   traduzir o export do OpenDesign (docs/design/raw/) pra estas variáveis.
+
+   REGRA (lição projeto-origem): telas usam SEMPRE var(--token) / classes do
+   tema — nunca hex literal. Duas telas com o mesmo papel visual ficam
+   idênticas porque bebem do mesmo token.
+   ============================================================================ */
+:root {
+  --background: oklch(98% 0 0);
+  --foreground: oklch(21% 0.01 260);
+  --primary: oklch(55% 0.18 260);
+  --primary-foreground: oklch(98% 0 0);
+  --muted: oklch(95.5% 0.005 260);
+  --muted-foreground: oklch(48% 0.01 260);
+  --border: oklch(90% 0.005 260);
+  --success: oklch(62% 0.15 150);
+  --warning: oklch(75% 0.15 80);
+  --danger: oklch(58% 0.2 25);
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --radius-card: var(--radius);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}

@@ -1,11 +1,13 @@
-// Lógica de domínio do produto. O time preenche durante o M1, seguindo os padrões do
-// STACK-DEFAULT (adapter pattern, stores como interface, tools registry, Zod nas fronteiras).
+// @app/core — lógica de domínio PURA (zero framework, zero HTTP, zero React).
+// Barrel = ZONA NEUTRA: sincronizado pelo Integrador no reconcile.
+//
+// Organização: 1 domínio = 1 pasta = 1 território de slot.
+//   src/<dominio>/...   ← Dev trabalha aqui dentro
+//   src/index.ts        ← Integrador re-exporta
+//
+// Padrões do STACK-DEFAULT que se materializam neste package:
+//   - stores como interface (src/<entidade>/stores/{memory,supabase}.ts + factory)
+//   - tools registry pra agentes de IA (src/tools/{library/,registry.ts,types.ts})
+//   - Zod nas fronteiras de cada função pública
 
-export const CORE_VERSION = '0.0.0' as const;
-
-/** Marca o ponto onde os adapters/stores/tools entram (ver references/STACK-DEFAULT.md). */
-export interface DomainPlaceholder {
-  readonly ready: boolean;
-}
-
-export const domain: DomainPlaceholder = { ready: false };
+export const CORE_VERSION = '0.1.0' as const;

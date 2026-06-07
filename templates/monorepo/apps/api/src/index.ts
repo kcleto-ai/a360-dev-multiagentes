@@ -1,8 +1,10 @@
-// Backend (Fastify + Better Auth + Zod). Stub até o M1 — o time constrói via /a360-vamos.
+// Entrypoint do backend. ZONA NEUTRA — só o Integrador altera.
+// Toda a composição do app vive em app.ts; aqui só sobe o servidor.
 
-export const API_NAME = '@app/api' as const;
+import { buildApp } from './app.ts';
+import { env } from './config/env.ts';
 
-/** Placeholder do bootstrap do servidor. O slot de backend substitui por Fastify real. */
-export function describe(): string {
-  return 'api stub — sem rotas ainda. Rode /a360-vamos.';
-}
+const app = await buildApp();
+
+await app.listen({ port: env.API_PORT, host: '0.0.0.0' });
+app.log.info(`api no ar em http://localhost:${env.API_PORT} (health: /api/health)`);

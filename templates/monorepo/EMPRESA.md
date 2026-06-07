@@ -7,6 +7,16 @@
 
 <1-2 frases: o que o produto faz e pra quem.>
 
+## Perfil do fundador (calibra a comunicação de TODO o time)
+
+**Nível técnico:** <leigo | curioso | dev>  _(perguntado no kickoff)_
+
+| Nível | Como o time fala com a pessoa |
+|---|---|
+| **leigo** | Linguagem de gente, zero jargão (ou entre parênteses). História, não arquitetura. Decisões técnicas tomadas pelo CTO; a pessoa confirma resultados. HTC = checklist de cliques. |
+| **curioso** | Conceitos explicados em 1 linha quando aparecem. Mostra o "porquê" técnico resumido. Decisões ainda do CTO, com racional curto. |
+| **dev** | Direto ao ponto técnico: termos, comandos, trade-offs, diffs. Sem tradução didática. CTO ainda dita defaults (STACK-DEFAULT), mas debate tecnicamente e aceita override com justificativa. HTC pode incluir curl/console. |
+
 ## Invariantes (5-7, não-negociáveis)
 
 1. **Multi-tenancy desde o dia 1** — toda entidade/query/log carrega `workspaceId` (se aplicável).

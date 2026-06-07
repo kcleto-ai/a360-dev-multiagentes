@@ -8,9 +8,12 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
+    "prepare": "node scripts/setup-hooks.mjs",
     "dev": "concurrently --names api,web --prefix-colors cyan,green --kill-others-on-fail \"pnpm --filter @app/api dev\" \"pnpm --filter @app/web dev\"",
     "dev:api": "pnpm --filter @app/api dev",
     "dev:web": "pnpm --filter @app/web dev",
+    "infra:up": "docker compose -f docker-compose.dev.yml up -d",
+    "infra:down": "docker compose -f docker-compose.dev.yml down",
     "typecheck:all": "pnpm -r --if-present typecheck",
     "build:all": "pnpm -r --if-present build",
     "test:all": "pnpm -r --if-present test",

@@ -4,7 +4,24 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo 'apps/web é um stub — rode /a360-vamos pra construir o frontend' && exit 0",
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@app/shared": "workspace:*",
+    "@tanstack/react-query": "^5.62.0",
+    "next": "^15.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.7.0"
   }
 }
