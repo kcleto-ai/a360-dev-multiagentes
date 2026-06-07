@@ -54,14 +54,20 @@ pnpm --filter @a360/ai-team cli plan --milestone=M1
 ```
 
 ## 3. Construir — skill `orquestrar-build`
-Loop multi-agente em worktrees. **Modo A (paralelo ao vivo, ⭐ demo)** ou **Modo B
-(automático)** — ver a skill. Cada slot: implementa a DESIGN-SPEC literalmente, `pnpm install`
-na worktree, smoke verde, `ARTIFACTS.md`, `STATUS=done`.
+Loop multi-agente em worktrees. **Modo C (autônomo, ⭐ default)** — workers headless
+(`claude -p`) na conta do próprio usuário, com despacho/watchdog/reconcile automáticos:
+```bash
+pnpm --filter @a360/ai-team cli run --milestone=M1 --workers=2
+```
+Alternativas: **Modo A** (paralelo ao vivo — demo com vários terminais) ou **Modo B**
+(serial, fallback) — ver a skill. Em qualquer modo, cada slot: implementa a DESIGN-SPEC
+literalmente, smoke territorial verde, `ARTIFACTS.md`, `STATUS=done`.
 
 ## 4. Integrar — papel Integrador
+No Modo C o reconcile dispara sozinho (leia `specs/RECONCILE-REPORT.md`). Nos modos A/B:
 ```bash
 git checkout main
-pnpm --filter @a360/ai-team cli reconcile     # merge --no-ff + barrels + smoke + cleanup
+pnpm --filter @a360/ai-team cli reconcile     # merge --no-ff + zoning + barrels + smoke + cleanup
 ```
 Depois, **review estrutural** (skill `review-before-merge`, Tier 1 = fidelidade à
 DESIGN-SPEC). Critical → reabre slot `blocked`. Conflito semântico → CTO decide.

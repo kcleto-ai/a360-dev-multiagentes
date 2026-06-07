@@ -18,9 +18,40 @@ pnpm --filter @a360/ai-team cli plan --milestone=M1   # lista os slots available
 ```
 Slots não commitados → commite primeiro (`chore(specs): slots do M1`).
 
-## Escolher modo (pergunte ao fundador — default: A)
+## Escolher modo (pergunte ao fundador — default: C)
 
-### Modo A — Demo paralelo (vários Claudes ao vivo) ⭐
+### Modo C — Autônomo (multi-agente real) ⭐ default
+
+O orquestrador despacha, vigia e integra sozinho. Workers são processos `claude -p`
+headless rodando na conta do próprio usuário — 1 comando e o milestone se constrói:
+
+```bash
+pnpm --filter @a360/ai-team cli run --milestone=M1 --workers=4
+```
+
+Squad padrão: **4 Devs (2 front + 2 back)** além de CTO/Arquiteto — já é o default do
+`.ai-team.json` (`autonomous.maxWorkers: 4`). A decomposição (decompose-goal §2.5) é quem
+garante slots prontos pra ocupar as 4 vagas; o backoff reduz sozinho se o rate limit apertar.
+
+O `run` faz em loop: despacha slots prontos (waves via DEPENDS-ON) → cada worker
+headless implementa a DESIGN-SPEC na sua worktree com **permissões gerenciadas**
+(Edit só dentro do TERRITORY.txt; zona neutra negada por mecanismo) → watchdog mata
+e re-despacha worker morto/estagnado/timeout (máx. 2 retries) → `done` dispara o
+reconcile automaticamente → `blocked` dispara **triage com Arquiteto one-shot**
+(ambiguidade de spec ele corrige e re-despacha; decisão de produto ele ESCALA pra
+pessoa) → dashboard live com tail dos logs. Termina quando o milestone integra,
+listando escalações pendentes.
+
+Útil saber:
+- `--dry-run` mostra o plano de despacho sem spawnar nada.
+- `--workers=N` — teto real é o rate limit da conta; o scheduler faz backoff sozinho.
+- Ctrl+C é seguro: o estado vive no git (claims nas branches) — rodar de novo continua.
+- O que NUNCA é autônomo: **HTC** e escalações de produto. `run` termina em
+  "integrado, aguardando review + seu teste" — nunca em "entregue".
+
+Depois do `run`: review estrutural (skill `review-before-merge`) → HTC.
+
+### Modo A — Demo paralelo (vários Claudes ao vivo, despacho manual)
 Pra cada slot, crie a worktree e pegue o prompt:
 ```bash
 pnpm --filter @a360/ai-team cli start --slot=<id> --worker=<nome> --milestone=M1
@@ -37,8 +68,9 @@ pnpm --filter @a360/ai-team cli status --milestone=M1
 > Pra plateia: 3 terminais lado a lado, cada um um Claude construindo um pedaço em
 > paralelo, + o dashboard atualizando. É o momento "uau" do demo.
 
-### Modo B — Automático (hands-off)
-Você (o orquestrador) atua como os workers, **um slot por vez**:
+### Modo B — Serial (fallback: 1 Claude trocando de chapéu)
+Sem `claude` CLI disponível pra spawn, você (o orquestrador) atua como os workers,
+**um slot por vez**:
 1. `ai-team start --slot=<id> --worker=<nome>` (cria a worktree + claim).
 2. Trabalhe **dentro da worktree**: `cd .worktrees/<nome>` e rode `pnpm install` (a
    worktree não herda o `node_modules` da main — sem isso o smoke não roda; é rápido).

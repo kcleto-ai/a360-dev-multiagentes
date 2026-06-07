@@ -20,10 +20,14 @@ de variável é Nit, não bloqueio), PM (smoke + review ✅ = pronto).
 
 ## Seu território (exclusivo)
 
-- Barrels/re-exports (`packages/*/index.ts`), config raiz, `pnpm-workspace.yaml`, `tsconfig.base.json`.
+- Zonas neutras (lista executável em `.ai-team.json → neutralZones`): barrels/re-exports,
+  composição da api (`app.ts`, `config/`, `plugins/`, `lib/`), frontend central
+  (`layout.tsx`, `globals.css`, `components/ui`, `lib/api`, barrel de queries),
+  `packages/shared/**`, config raiz.
 - Branch `main` e branches de integração.
 
-Você **não** toca: código de feature dentro dos territórios dos Devs; `EMPRESA.md`; `docs/`.
+Você **não** toca: código de feature dentro dos territórios dos Devs; `EMPRESA.md`; `docs/`
+(exceto ao fechar milestone).
 
 ## Sequência (ao fechar um milestone)
 
@@ -34,22 +38,27 @@ pnpm --filter @a360/ai-team cli status --milestone=M1   # todos os slots done?
 pnpm --filter @a360/ai-team cli reconcile               # merge + sync barrels + smoke + cleanup
 ```
 
-O `reconcile` faz merge `--no-ff` de cada branch `done`, auto-resolve conflito de
-STATUS.txt (sempre prefere `done`), sincroniza barrels configurados, roda o smoke e
-remove as worktrees mergeadas.
+O `reconcile` faz merge `--no-ff` de cada branch `done`, **valida zoning** (diff da branch
+vs TERRITORY.txt + zonas neutras), auto-resolve conflito de STATUS.txt (sempre prefere
+`done`), sincroniza barrels configurados, roda o smoke, grava `specs/RECONCILE-REPORT.md`
+e remove as worktrees mergeadas.
 
 Depois do merge:
 
-1. **Review estrutural** (skill `review-before-merge`): **Tier 1 = fidelidade à
+1. **Leia o `specs/RECONCILE-REPORT.md`**: 🚨 de zoning → avalie (refazer no lugar certo
+   ou reverter + reabrir o slot). Slot sem TERRITORY.txt → cobre o Arquiteto.
+2. **Review estrutural** (skill `review-before-merge`): **Tier 1 = fidelidade à
    DESIGN-SPEC** (o código bate com os nomes/schemas da spec?), + segurança baseline +
    invariantes do `EMPRESA.md`. Critical/Blocker → reabra o slot `blocked:<motivo>` pro
    worker correto, saia sem declarar pronto.
-2. **Smoke cruzado**: typecheck + build (+ testes, se houver). Tudo verde.
-3. Atualize barrels/re-exports se algum slot adicionou export novo.
-4. **HTC (Human Test Checkpoint)** — review verde NÃO é "entregue". Monte um checklist de
+3. **Pendências + candidatos à fundação** (ARTIFACTS.md de cada slot): registre módulos no
+   `app.ts`, exports nos barrels, env vars no trio env.ts/.env.example/vitest.config.ts;
+   componentes locais duplicados entre slots → promova UMA versão pra `components/ui`.
+4. **Smoke cruzado**: typecheck + build (+ testes, se houver). Tudo verde.
+5. **HTC (Human Test Checkpoint)** — review verde NÃO é "entregue". Monte um checklist de
    teste a partir dos critérios de sucesso do `docs/ROADMAP.md`, suba o app (`pnpm dev`),
    apresente à pessoa e **espere a aprovação** (`AskUserQuestion`). Reprovado → slots `fix-<n>`.
-5. **Aprovado → feche o milestone atualizando a biblioteca viva:** `docs/SOLUTION-OVERVIEW.md`
+6. **Aprovado → feche o milestone atualizando a biblioteca viva:** `docs/SOLUTION-OVERVIEW.md`
    (arquitetura real), `docs/ROADMAP.md` (M1 ✅ + data), ADRs novos, `specs/RESUME.md`.
 
 ## Regras invioláveis

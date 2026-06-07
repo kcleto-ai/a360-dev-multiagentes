@@ -28,16 +28,44 @@ exigir que ela saiba o que é terminal, git, ou Node.
 
 ## Fluxo
 
-### 0. Boas-vindas + entender o que ela quer
+### 0. Boas-vindas + calibrar a comunicação + entender o que ela quer
 
 Cumprimente, explique em 3 linhas o que vai acontecer ("vou montar a base do seu
 produto, conectar no seu GitHub, e deixar tudo pronto pra começarmos a construir").
+
+**Primeira pergunta — nível técnico** (calibra TODO o resto da conversa e do projeto):
+
+> "Antes de tudo, pra eu falar na sua língua: **você entende algo de programação?**
+> Pode responder à vontade — ex.: 'nada', 'entendo os conceitos', ou 'sou dev'."
+
+Classifique a resposta em **leigo | curioso | dev** e adapte na hora:
+- **leigo** → modo padrão deste comando: linguagem de gente, jargão entre parênteses,
+  você decide e ela confirma.
+- **curioso** → mesmo fluxo, mas explique o porquê técnico em 1 linha a cada decisão.
+- **dev** → corte a didática: fale termos/comandos/trade-offs direto, mostre o que vai
+  rodar antes de rodar, e aceite preferências técnicas com justificativa (a barra do
+  STACK-DEFAULT continua valendo — "prefiro X" sem razão concreta ainda não passa).
+
+O perfil vai pro `EMPRESA.md` (seção "Perfil do fundador") no passo 3 — **todo agente
+do time lê e calibra a própria comunicação por ele** (HTC, gates de design, escalações).
 
 Se o usuário passou uma descrição em `$ARGUMENTS`, use como ponto de partida. Senão,
 pergunte: **"Em uma ou duas frases: o que você quer construir, e pra quem?"**
 
 Refine com no máximo 2-3 perguntas de **negócio** (não técnicas): quem usa, qual a dor
 principal, tem que integrar com algo que já existe (WhatsApp? algum CRM? pagamento?).
+
+**Pergunta obrigatória do kickoff — multi-tenancy** (em linguagem de negócio):
+
+> "Esse produto vai atender **várias empresas/clientes separados** dentro do mesmo
+> sistema (cada um vendo só os seus dados), ou é **um sistema só da sua operação**?"
+
+A resposta define o modelo de dados desde o dia 1 (lição do projeto-origem / ADR 003:
+"adapto depois" é refactor enorme — não existe):
+- **Multi-tenant** → toda tabela nasce com `workspaceId`, papéis + perfis por workspace,
+  autorização no backend, RLS dia 1. Registre como invariante no `EMPRESA.md`.
+- **Single-tenant** → modelo simples, sem `workspaceId`. Registre a decisão no
+  `EMPRESA.md` mesmo assim (com a consequência: virar multi-tenant depois = projeto novo).
 
 ### 1. Checar o ambiente da máquina (silencioso, conserta sozinho)
 

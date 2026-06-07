@@ -15,6 +15,9 @@ mesmo que um único agente esteja executando tudo.
 - HTC reprovado pela pessoa.
 - Bug encontrado (local ou produção).
 - Reconcile com conflito que exigiu intervenção.
+- Zoning violado (🚨 no RECONCILE-REPORT.md) — por que o território não bastou?
+- DESIGN-SPEC ambígua descoberta na implementação (Dev teve que decidir algo que a spec
+  deveria ter cravado).
 
 ## Como registrar
 1. Abra `docs/LEARNINGS.md`. Adicione uma entrada **no topo** (append-only — não edite as antigas):
